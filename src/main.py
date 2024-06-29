@@ -6,6 +6,9 @@
 # and helper Functions
 
 from get_char import getchar
+from cmd_args import setup_cmd_args
+from local_line_mode import local_line_mode
+
 import time
 import keyboard 
 import sys
@@ -46,23 +49,27 @@ def com_rx(port: serial.Serial) -> None:
     sys.stdout.flush()
     
 
+
 def main() -> None:
     """
     The main function for the project 
     """
-    port = serial.Serial("/dev/ttyUSB0", 57600, timeout=0.5)
+    # keyboard.add_hotkey('ctrl + shift + z', callback=com_tx, args={port})
+    # keyboard.add_hotkey('ctrl + c', callback=exit)
 
-    keyboard.add_hotkey('ctrl + shift + z', callback=com_tx, args={port})
-    keyboard.add_hotkey('ctrl + c', callback=exit)
+    parser = setup_cmd_args()
+    args = parser.parse_args()
+    print(f"Serial monitor started: {args.data}, {args.stop}, {args.baud},",
+        f"{args.parity}")
 
+    port = serial.Serial(port=args.port, baudrate=args.baud, 
+        bytesize=args.data, parity=args.parity, stopbits=args.stop,
+        timeout=0.5)
 
-    while (True):
-        if (not com_tx_flag):
-            com_rx(port)
-
-        
-    
-
+    if (args.mode == "local"):
+        local_line_mode(port, args.display)
+    elif (args.mode == "dumb"):
+        pass
 
 if __name__ == "__main__":
     main()
