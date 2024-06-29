@@ -31,7 +31,7 @@ def setup_cmd_args() -> argparse.ArgumentParser:
         help="baud rate for device (D: 9600)")
     
     serial_settings.add_argument("parity", nargs="?", type=str, action="store",
-        choices=["Y", "N"], default="n",
+        choices=["Y", "N"], default="N",
         help="whether parity is enabled \"y/n\" (D: \"n\")")
     
     # Mode select

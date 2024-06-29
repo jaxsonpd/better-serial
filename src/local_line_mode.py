@@ -156,6 +156,3 @@ def local_line_mode(port: serial.Serial , display: bool = False) -> None:
 
     com_tx_thread.join()
     com_rx_thread.join()
-
-
-
