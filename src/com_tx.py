@@ -6,6 +6,7 @@
 
 import string
 import serial
+import os
 
 from get_char import getchar
 
@@ -91,7 +92,7 @@ def com_tx_local_thread_entry(port: serial.Serial) -> None:
         str_to_send = input()
 
         output_bytes = convert_to_bytes(str_to_send)
-        output_bytes.append(13)
+        output_bytes.append(13) # \n
 
         port.write(output_bytes) 
 
@@ -108,4 +109,8 @@ def com_tx_dumb_thread_entry(port: serial.Serial) -> None:
 
     while (True):
         char = getchar()
+
+        if (char.encode() == b'\x1b'):
+            os._exit(0)
+
         port.write(char.encode())
