@@ -13,7 +13,7 @@ jobs:
     runs-on: [ubuntu-latest]
     permissions: write-all
     steps:
-    - name: Create Release # Create a new release on Github
+    - name: Create Release # Create a new release on Github (set_output depreciated????)
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -41,14 +41,14 @@ jobs:
     strategy: # Run the same steps on two different os
       matrix:
         include:
-          - os: macos-latest
-            TARGET: macos
-            CMD_BUILD: >
-                pyinstaller -F -n bterm ./src/main.py &&
-                cd src/dist/ &&
-                zip -r9 bterm bterm.app/                
-            OUT_FILE_NAME: bterm.zip
-            ASSET_MIME: application/zip
+        #   - os: macos-latest
+        #     TARGET: macos
+        #     CMD_BUILD: >
+        #         pyinstaller -F -n bterm ./src/main.py &&
+        #         cd ./src/dist/ &&
+        #         zip -r9 bterm bterm.app/                
+        #     OUT_FILE_NAME: bterm.zip
+        #     ASSET_MIME: application/zip
 
           - os: windows-latest
             TARGET: windows
