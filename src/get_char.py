@@ -40,7 +40,13 @@ class _GetchWindows:
 
     def __call__(self):
         import msvcrt
-        return msvcrt.getch()
+        char = msvcrt.getch()
+        try:
+            char = char.decode()
+        except UnicodeDecodeError:
+            print("error bad input no char sent")
+            char = -1
+        return char
     
 getch = _Getch()
 
@@ -60,5 +66,6 @@ if __name__ == "__main__":
             print("\nnewline")
         elif (char == "\x03"):
             print("\ncontrol c")
+            exit(0)
         else:
-            print(char.encode("UTF-8"), end="")
+            print(char.encode())

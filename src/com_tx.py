@@ -7,6 +7,7 @@
 import string
 import serial
 import os
+import sys
 
 from get_char import getchar
 
@@ -15,7 +16,7 @@ escape_chars = ['n', 'r', 't', 'b', 'f', 'o', 'x', '\\']
 
 def convert_to_bytes(input_str: string) -> bytearray:
     """
-    convert the provided string into a byte array without escaping \. This
+    convert the provided string into a byte array without escaping \\. This
     allows the sending of non printable chars to the device. 
 
     ### Params:
@@ -35,8 +36,9 @@ def convert_to_bytes(input_str: string) -> bytearray:
     char_num = 0
 
     while (char_num < len(input_str)):
+        # escape sequences
         if (input_str[char_num] == '\\' 
-            and char_num < (len(input_str) - 1)): # escape sequence
+            and char_num < (len(input_str) - 1)): 
             
             if (input_str[char_num+1] == 'n'):
                     output_bytes.append(10)
@@ -87,14 +89,16 @@ def com_tx_local_thread_entry(port: serial.Serial) -> None:
     port: serial.Serial
         The serial port to write to
     """
+    try:
+        while (True):
+            str_to_send = input()
 
-    while (True):
-        str_to_send = input()
+            output_bytes = convert_to_bytes(str_to_send)
+            output_bytes.append(13) # \n
 
-        output_bytes = convert_to_bytes(str_to_send)
-        output_bytes.append(13) # \n
-
-        port.write(output_bytes) 
+            port.write(output_bytes) 
+    except EOFError:
+        os._exit(0)
 
 
 def com_tx_dumb_thread_entry(port: serial.Serial) -> None:
@@ -110,7 +114,12 @@ def com_tx_dumb_thread_entry(port: serial.Serial) -> None:
     while (True):
         char = getchar()
 
-        if (char.encode() == b'\x1b'):
+        if (char == -1):
+              continue
+        elif (char == '\b'):
+              print('\b\x20\b', end="")
+              sys.stdout.flush()
+        elif (char == '\x03'):
             os._exit(0)
 
         port.write(char.encode())
