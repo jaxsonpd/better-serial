@@ -2,7 +2,9 @@ name: Build
 
 # Capture push events with the tag v* eg. v1.0 etc.
 on:
-    workflow_dispatch
+    push:
+        tags:
+            - '*'
 
 jobs:
 
