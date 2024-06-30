@@ -1,4 +1,4 @@
-# better-serial
+# Better Serial
 
 A serial terminal that isn't rubbish. This project was inspired by the
 sorry state of the serial monitor offering available especially on windows.
@@ -64,7 +64,7 @@ pip3 install -r requirements.txt
 ```
 
 
-### Pre compiled
+### Pre-compiled
 
 Pre-compiled versions of this application can be found in the releases tab. 
 These have been created using `pyinstaller` and may or may not work, I make
@@ -78,7 +78,7 @@ This allows the use of blocking read and writes simplify the code. There are
 two threads the first handles receive and print to the terminal `com_rx.py` and 
 the second handles getting user input and sending to the device `com_tx.py`.
 
-## To-Do
+## To Do
 
 ### Admin/Tidy
 - [ ] Move threads to classes
