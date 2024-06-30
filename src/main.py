@@ -5,27 +5,44 @@
 # @brief the main file for the better-terminal app containing the main loop 
 # and helper Functions
 
-import serial.serialutil
-from get_char import getchar
-from cmd_args import setup_cmd_args
-from local_line_mode import local_line_mode
-
+import threading
 import serial
 
+from get_char import getchar
+from cmd_args import setup_cmd_args
+from com_rx import com_rx_thread_entry
+from com_tx import com_tx_local_thread_entry, com_tx_dumb_thread_entry
 
-def main() -> None:
-    """
-    The main function for the project 
-    """
-    parser = setup_cmd_args()
-    args = parser.parse_args()
 
+def open_serial_port(port: str, baud: int, data: int, parity: str,
+    stop: int, timeout: float) -> serial.Serial:
+    """
+    Continuously attempt to open a serial port.
+
+    ### Param:
+    port: string
+        The serial port to open
+    baud: int
+        The baud rate to open the serial port
+    data: int
+        The number of data bits
+    parity: str 
+        The whether parity is enabled
+    stop: int
+        The number of stop bits
+    timeout: float
+        The time to wait before timing out on a serial read
+
+    ### Returns:
+     : serial.Serial
+        The opened serial port
+    """
     serial_started = False
     first_print = True
     while (not serial_started):
         try:
-            port = serial.Serial(port=args.port, baudrate=args.baud, 
-                bytesize=args.data, parity=args.parity, stopbits=args.stop,
+            port = serial.Serial(port=port, baudrate=baud, 
+                bytesize=data, parity=parity, stopbits=stop,
                 timeout=0.5)
             serial_started = True
             
@@ -36,14 +53,44 @@ def main() -> None:
             first_print = False
         except:
             exit(0)
-    
-    print(f"Serial monitor started: {args.data}, {args.stop}, {args.baud},",
-        f"{args.parity}")
+
+    print(f"Serial monitor started: {data}, {stop}, {baud}, {parity}")
+
+    return port
+
+def main() -> None:
+    """
+    The main function for the project 
+    """
+    parser = setup_cmd_args()
+    args = parser.parse_args()
+
+    # Wait for serial port to open
+    port = open_serial_port(args.port, args.baud, args.data, args.parity,
+        args.stop, args.timeout)
+
+    # Setup application threads
+    com_tx_thread = threading.Thread()
 
     if (args.mode == "local"):
-        local_line_mode(port, args.display)
+        print(f"In local edit mode with display {args.display}.")
+        com_tx_thread = threading.Thread(group=None, 
+            target=com_tx_local_thread_entry, args=(port, ))
+        
     elif (args.mode == "dumb"):
-        print("Started Dumb")
+        print(f"In dumb mode with display {args.display}.")
+        com_tx_thread = threading.Thread(group=None, 
+            target=com_tx_dumb_thread_entry, args=(port, ))
+
+    com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
+        args=(port, args.display, ))
+    
+    # start threads
+    com_tx_thread.start()
+    com_rx_thread.start()
+
+    com_tx_thread.join()
+    com_rx_thread.join()
 
 if __name__ == "__main__":
     main()

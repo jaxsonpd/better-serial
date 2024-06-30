@@ -1,13 +1,13 @@
 ## 
-# @file local_line_mode.py
+# @file com_tx.py
 # @author Jack Duignan (JackpDuignan@gmail.com)
-# @date 2024-06-29
-# @brief Local line editing terminal mode to allow special char to be sent
+# @date 2024-06-30
+# @brief The file contains the functionality to send over the serial port.
 
-import serial
-import threading
-import sys
 import string
+import serial
+
+from get_char import getchar
 
 # Possible escape characters
 escape_chars = ['n', 'r', 't', 'b', 'f', 'o', 'x', '\\']
@@ -76,9 +76,9 @@ def convert_to_bytes(input_str: string) -> bytearray:
     return output_bytes
 
 
-def com_tx_thread_entry(port: serial.Serial) -> None:
+def com_tx_local_thread_entry(port: serial.Serial) -> None:
     """
-    Send to device serial transmit thread entry. This thread takes user input
+    Local edit serial transmit thread entry. This thread takes user input
     and then sends it to the device including non printable chars entered in
     the normal python format (e.g. \x00).
 
@@ -96,63 +96,16 @@ def com_tx_thread_entry(port: serial.Serial) -> None:
         port.write(output_bytes) 
 
 
-def com_rx_thread_entry(port: serial.Serial, display: bool = False) -> None:
+def com_tx_dumb_thread_entry(port: serial.Serial) -> None:
     """
-    Receive from device thread entry. This thread reads from the serial port and
-    prints one byte at a time to the terminal.
+    Dumb terminal serial transmit thread entry. This thread takes user input
+    and then sends it to the device one char at a time.
 
     ### Params:
-    port : serial.Serial
-        The serial port to print to
-
-    display : bool = False
-        Whether to print non displayable characters that are read from the 
-        serial port
-    """
-    printable_chars = string.printable
-    # printable_chars = printable_chars.replace('~', '') # Test its working
-
-    printable_char_bytes = bytes(printable_chars, 'ascii')
-
-    while (True):
-        com_rx = port.read(1)
-
-        if (com_rx == b''): # if empty don't print
-            continue
-
-        if (display):
-            if (com_rx in printable_char_bytes):
-                print(com_rx.decode(), end="")
-            else:
-                print(com_rx, end="")
-        else:
-            print(com_rx.decode(), end="")
-
-        sys.stdout.flush()
-
-def local_line_mode(port: serial.Serial , display: bool = False) -> None:
-    """
-    Local line editing mode (and thus special char sending mode) application
-
     port: serial.Serial
         The serial port to write to
-    
-    display : bool = False
-        Whether to print non displayable characters that are read from the 
-        serial port
     """
-    print(f"In local edit mode with display {display}.")
 
-    # Setup threads
-    com_tx_thread = threading.Thread(group=None, target=com_tx_thread_entry,
-        args=(port, ))
-    
-    com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
-        args=(port, display))
-
-    # Run threads    
-    com_tx_thread.start()
-    com_rx_thread.start()
-
-    com_tx_thread.join()
-    com_rx_thread.join()
+    while (True):
+        char = getchar()
+        port.write(char.encode())
