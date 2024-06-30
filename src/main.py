@@ -43,7 +43,7 @@ def open_serial_port(port: str, baud: int, data: int, parity: str,
         try:
             port = serial.Serial(port=port, baudrate=baud, 
                 bytesize=data, parity=parity, stopbits=stop,
-                timeout=0.5)
+                timeout=timeout)
             serial_started = True
             
         except serial.serialutil.SerialException:
@@ -67,7 +67,7 @@ def main() -> None:
 
     # Wait for serial port to open
     port = open_serial_port(args.port, args.baud, args.data, args.parity,
-        args.stop, args.timeout)
+        args.stop, 0.5)
 
     # Setup application threads
     com_tx_thread = threading.Thread()
