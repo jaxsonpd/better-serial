@@ -11,6 +11,7 @@ jobs:
   createrelease:
     name: Create Release
     runs-on: [ubuntu-latest]
+    permissions: write-all
     steps:
     - name: Create Release # Create a new release on Github
       id: create_release
@@ -36,6 +37,7 @@ jobs:
     name: Build packages
     needs: createrelease
     runs-on: ${{ matrix.os }}
+    permissions: write-all
     strategy: # Run the same steps on two different os
       matrix:
         include:
