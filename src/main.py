@@ -12,6 +12,22 @@ from get_char import getchar
 from cmd_args import setup_cmd_args
 from com_rx import com_rx_thread_entry
 from com_tx import com_tx_local_thread_entry, com_tx_dumb_thread_entry
+from configuration import Config, ConfigDict
+
+def load_settings() -> ConfigDict:
+    """
+    Load settings from a file if it exists otherwise create it from the default
+    configuration.
+
+    ### Returns:
+    out : ConfigDict
+        The loaded configuration object
+    """
+    config = ConfigDict()
+    config = Config.load_json("settings.json")
+
+    return config
+        
 
 
 def open_serial_port(port: str, baud: int, data: int, parity: str,
@@ -62,6 +78,9 @@ def main() -> None:
     """
     The main function for the project 
     """
+    # load settings file
+    app_settings = load_settings()
+
     parser = setup_cmd_args()
     args = parser.parse_args()
 
