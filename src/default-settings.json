@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "mode": "dumb",
+    "serial": {
+        "port": "/dev/ttyUSB0",
+        "baud": 115200,
+        "data": 8,
+        "stop": 1,
+        "parity": "N"
+    },
+    "terminal": {
+        "display_npc": false,
+        "new_line_char": "NaN"
+    }
+}

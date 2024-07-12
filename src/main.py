@@ -12,7 +12,50 @@ from get_char import getchar
 from cmd_args import setup_cmd_args
 from com_rx import com_rx_thread_entry
 from com_tx import com_tx_local_thread_entry, com_tx_dumb_thread_entry
+from configuration import Config, ConfigDict
 
+def load_settings() -> tuple[ConfigDict, ConfigDict]:
+    """
+    Load settings from a file if it exists otherwise create it from the default
+    configuration.
+
+    ### Returns:
+    out : ConfigDict
+        The default configuration 
+    out : ConfigDict
+        THe config dictionary for the current configuration
+    """
+    default_cfg = ConfigDict()
+
+    current_cfg = ConfigDict()
+    current_cfg.version = 1
+
+    default_cfg = Config.load_json("default-settings.json")
+    
+    return default_cfg, current_cfg
+
+def transpose_args(args, current_cfg: ConfigDict) -> None:
+    """
+    Copy the parser args to the current configuration
+
+    ### Params:
+    args : 
+        The parser arguments
+    current_cfg
+        The current configurations
+    """
+    current_cfg.mode = args.mode
+    current_cfg.serial = ConfigDict()
+    current_cfg.serial.port = args.port
+    current_cfg.serial.baud = args.baud
+    current_cfg.serial.data = args.data
+    current_cfg.serial.parity = args.parity
+    current_cfg.serial.stop = args.stop
+    current_cfg.serial.display = args.display
+    
+    current_cfg.terminal = ConfigDict()
+    current_cfg.terminal.display_npc = args.display
+    current_cfg.terminal.new_line_char = "NaN"
 
 def open_serial_port(port: str, baud: int, data: int, parity: str,
     stop: int, timeout: float) -> serial.Serial:
@@ -62,28 +105,37 @@ def main() -> None:
     """
     The main function for the project 
     """
-    parser = setup_cmd_args()
+    # load settings file
+    default_cfg, current_cfg = load_settings()
+
+    parser = setup_cmd_args(default_cfg)
     args = parser.parse_args()
 
+    transpose_args(args, current_cfg)
+
+    current_cfg.save_json("settings.json")
+
     # Wait for serial port to open
-    port = open_serial_port(args.port, args.baud, args.data, args.parity,
-        args.stop, 0.5)
+    port = open_serial_port(current_cfg.serial.port, current_cfg.serial.baud, 
+        current_cfg.serial.data, current_cfg.serial.parity, 
+        current_cfg.serial.stop, 0.5)
 
     # Setup application threads
     com_tx_thread = threading.Thread()
 
+    print(f"In {current_cfg.mode} mode with display " \
+        f"{current_cfg.terminal.display_npc}.")
+    
     if (args.mode == "local"):
-        print(f"In local edit mode with display {args.display}.")
         com_tx_thread = threading.Thread(group=None, 
             target=com_tx_local_thread_entry, args=(port, ))
         
     elif (args.mode == "dumb"):
-        print(f"In dumb mode with display {args.display}.")
         com_tx_thread = threading.Thread(group=None, 
             target=com_tx_dumb_thread_entry, args=(port, ))
 
     com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
-        args=(port, args.display, ))
+        args=(port, current_cfg.terminal.display_npc, ))
     
     # start threads
     com_tx_thread.start()

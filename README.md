@@ -78,6 +78,11 @@ This allows the use of blocking read and writes simplify the code. There are
 two threads the first handles receive and print to the terminal `com_rx.py` and 
 the second handles getting user input and sending to the device `com_tx.py`.
 
+This program uses two settings files. The first (`default-settings.json`)
+handles the default values for the program while the second (`settings.json`)
+contains the settings for the current session (this should not be edited as
+the program reads directly from it).
+
 ## To Do
 
 ### Admin/Tidy
