@@ -36,26 +36,28 @@ def setup_cmd_args(default_cfg: ConfigDict) -> argparse.ArgumentParser:
         help=f"baud rate for device (D: {default_cfg.serial.baud})")
     
     serial_settings.add_argument("data", nargs="?", type=int, action="store",
-        choices=[6, 7, 8], default=default_cfg.serial.data_bits, 
-        help=f"number of data bits (D: {default_cfg.serial.data_bits})")
+        choices=[6, 7, 8], default=default_cfg.serial.data, 
+        help=f"number of data bits (D: {default_cfg.serial.data})")
     
     serial_settings.add_argument("stop", nargs="?", type=int, action="store",
-        choices=[1, 2], default=default_cfg.serial.stop_bits, 
-        help=f"number of stop bits (D: {default_cfg.serial.stop_bits})")
+        choices=[1, 2], default=default_cfg.serial.stop, 
+        help=f"number of stop bits (D: {default_cfg.serial.stop})")
     
     serial_settings.add_argument("parity", nargs="?", type=str, action="store",
         choices=["Y", "N"], default=default_cfg.serial.parity,
         help=f"whether parity is enabled (D: \"{default_cfg.serial.parity}\")")
     
     # Mode select
-    parser.add_argument("-m", "--mode", nargs="?", action="store", default="dumb",
+    parser.add_argument("-m", "--mode", nargs="?", action="store", 
+        default=default_cfg.mode,
         type=str, choices=["dumb", "local"], 
-        help="""mode to start the monitor in dumb or local(-line) 
-        (D: \"dumb\")""")
+        help=f"""mode to start the monitor in dumb or local(-line) 
+        (D: \"{default_cfg.mode}\")""")
     
     # Non printable char display toggle
     parser.add_argument("-d", "--display", action="store_true", 
-        default=False, help="enable the printing of non-printable chars")
+        default=default_cfg.terminal.display_npc, help="""enable the printing
+        of non-printable chars""")
     
     # # Print in byte formula
     # parser.add_argument("-a", "--all", action="store_true", default=False,
