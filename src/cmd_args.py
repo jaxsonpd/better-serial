@@ -8,7 +8,7 @@ import argparse
 
 from configuration import ConfigDict
 
-def setup_cmd_args(config: ConfigDict) -> argparse.ArgumentParser:
+def setup_cmd_args(default_cfg: ConfigDict) -> argparse.ArgumentParser:
     """
     Setup the command line arguments that can be provided to the program
     
@@ -28,24 +28,24 @@ def setup_cmd_args(config: ConfigDict) -> argparse.ArgumentParser:
         "Serial port settings")
     
     serial_settings.add_argument("port", nargs="?", type=str, action="store",
-        default=config.init_serial.port, 
-        help=f"port to open (D: {config.init_serial.port})")
+        default=default_cfg.serial.port, 
+        help=f"port to open (D: {default_cfg.serial.port})")
     
     serial_settings.add_argument("baud", nargs="?", type=int, action="store",
-        choices=[9600, 57600, 115200], default=config.init_serial.baud, 
-        help=f"baud rate for device (D: {config.init_serial.baud})")
+        choices=[9600, 57600, 115200], default=default_cfg.serial.baud, 
+        help=f"baud rate for device (D: {default_cfg.serial.baud})")
     
     serial_settings.add_argument("data", nargs="?", type=int, action="store",
-        choices=[6, 7, 8], default=config.init_serial.data_bits, 
-        help=f"number of data bits (D: {config.init_serial.data_bits})")
+        choices=[6, 7, 8], default=default_cfg.serial.data_bits, 
+        help=f"number of data bits (D: {default_cfg.serial.data_bits})")
     
     serial_settings.add_argument("stop", nargs="?", type=int, action="store",
-        choices=[1, 2], default=config.init_serial.stop_bits, 
-        help=f"number of stop bits (D: {config.init_serial.stop_bits})")
+        choices=[1, 2], default=default_cfg.serial.stop_bits, 
+        help=f"number of stop bits (D: {default_cfg.serial.stop_bits})")
     
     serial_settings.add_argument("parity", nargs="?", type=str, action="store",
-        choices=["Y", "N"], default=config.init_serial.parity,
-        help=f"whether parity is enabled (D: \"{config.init_serial.parity}\")")
+        choices=["Y", "N"], default=default_cfg.serial.parity,
+        help=f"whether parity is enabled (D: \"{default_cfg.serial.parity}\")")
     
     # Mode select
     parser.add_argument("-m", "--mode", nargs="?", action="store", default="dumb",

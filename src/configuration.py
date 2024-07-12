@@ -49,6 +49,9 @@ class Config(object):
             result = Config.__load__(json.loads(f.read()))
         return result
     
+def test(config):
+    config.version = 2
+
 
 if __name__ == "__main__":
     with open("test.json", "w+") as f:
