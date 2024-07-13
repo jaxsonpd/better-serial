@@ -10,8 +10,9 @@ import serial
 
 from get_char import getchar
 from cmd_args import setup_cmd_args
-from com_rx import com_rx_thread_entry
+from com_rx import com_rx_thread_entry, ComRxThread
 from com_tx import com_tx_local_thread_entry, com_tx_dumb_thread_entry
+
 from configuration import Config, ConfigDict
 
 def load_settings() -> tuple[ConfigDict, ConfigDict]:
@@ -134,9 +135,11 @@ def main() -> None:
         com_tx_thread = threading.Thread(group=None, 
             target=com_tx_dumb_thread_entry, args=(port, ))
 
-    com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
-        args=(port, current_cfg.terminal.display_npc, ))
+    # com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
+    #     args=(port, current_cfg.terminal.display_npc, ))
     
+    com_rx_thread = ComRxThread(port, current_cfg.terminal.display_npc)
+
     # start threads
     com_tx_thread.start()
     com_rx_thread.start()

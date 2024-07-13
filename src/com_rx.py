@@ -8,6 +8,7 @@
 import string
 import sys
 import serial
+import threading
 
 def com_rx_thread_entry(port: serial.Serial, display: bool = False) -> None:
     """
@@ -42,3 +43,49 @@ def com_rx_thread_entry(port: serial.Serial, display: bool = False) -> None:
             print(com_rx.decode(), end="")
 
         sys.stdout.flush()
+
+
+class ComRxThread(threading.Thread):
+    """
+    A thread to receive values from the serial port and print them to the
+    terminal.
+    """
+    def __init__(self, serial_port: serial.Serial, display: bool = False):
+        """
+        Initialise the thread to receive value from the serial port and print
+        it to the terminal
+
+        ### Params:
+        serial_port : serial.Serial
+            The serial port to read from
+        display : bool = False
+            Weather to display non printable characters
+        """
+        super().__init__(group=None)
+        
+        printable_chars = string.printable
+        self.printable_char_bytes = bytes(printable_chars, 'ascii')
+
+        self.serial_port = serial_port
+        self.display = display
+
+    def run(self):
+        """
+        Run the com receive thread
+        """
+        while (True):
+            com_rx = self.serial_port.read(1)
+
+            if (com_rx == b''): # if empty don't print
+                continue
+
+            if (self.display):
+                if (com_rx in self.printable_char_bytes):
+                    print(com_rx.decode(), end="")
+                else:
+                    print(com_rx, end="")
+            else:
+                print(com_rx.decode(), end="")
+
+            sys.stdout.flush()
+        
