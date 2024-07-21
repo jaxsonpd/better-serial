@@ -8,10 +8,11 @@
 import string
 import sys
 import serial
-import threading
+import multiprocessing
+import utils
 
 
-class ComRxThread(threading.Thread):
+class ComRxThread(multiprocessing.Process):
     """
     A thread to receive values from the serial port and print them to the
     terminal.
@@ -27,7 +28,7 @@ class ComRxThread(threading.Thread):
         display : bool = False
             Weather to display non printable characters
         """
-        super().__init__(group=None)
+        super().__init__(group=None, name="com_rx_thread")
         
         printable_chars = string.printable
         self.printable_char_bytes = bytes(printable_chars, 'ascii')
@@ -40,7 +41,10 @@ class ComRxThread(threading.Thread):
         Run the com receive thread
         """
         while (True):
-            com_rx = self.serial_port.read(1)
+            try:
+                com_rx = self.serial_port.read(1)
+            except serial.SerialException:
+                utils.close_com_threads()
 
             if (com_rx == b''): # if empty don't print
                 continue

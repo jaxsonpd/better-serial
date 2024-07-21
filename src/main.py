@@ -5,13 +5,13 @@
 # @brief the main file for the better-terminal app containing the main loop 
 # and helper Functions
 
-import threading
 import serial
 
 from get_char import getchar
 from cmd_args import setup_cmd_args
 from com_rx import ComRxThread
 from com_tx import ComTxThread
+import pty
 
 from configuration import Config, ConfigDict
 
@@ -115,27 +115,31 @@ def main() -> None:
 
     current_cfg.save_json("settings.json")
 
-    # Wait for serial port to open
-    port = open_serial_port(current_cfg.serial.port, current_cfg.serial.baud, 
-        current_cfg.serial.data, current_cfg.serial.parity, 
-        current_cfg.serial.stop, 0.5)
+    while (True):
+        current_cfg = Config.load_json("settings.json")
 
-    # Setup application threads
-    com_tx_thread = threading.Thread()
+        # Wait for serial port to open
+        port = open_serial_port(current_cfg.serial.port, current_cfg.serial.baud, 
+            current_cfg.serial.data, current_cfg.serial.parity, 
+            current_cfg.serial.stop, 0.5)
 
-    print(f"In {current_cfg.mode} mode with display " \
-        f"{current_cfg.terminal.display_npc}.")
-    
-    com_tx_thread = ComTxThread(port, current_cfg.mode)
-    
-    com_rx_thread = ComRxThread(port, current_cfg.terminal.display_npc)
+        print(f"In {current_cfg.mode} mode with display " \
+            f"{current_cfg.terminal.display_npc}.")
 
-    # start threads
-    com_tx_thread.start()
-    com_rx_thread.start()
+        com_tx_thread = ComTxThread(port, current_cfg.mode)
+        
+        com_rx_thread = ComRxThread(port, current_cfg.terminal.display_npc)
 
-    com_tx_thread.join()
-    com_rx_thread.join()
+        # start threads
+        com_tx_thread.start()
+        com_rx_thread.start()
+
+        com_tx_thread.join()
+        print("exited tx")
+        com_rx_thread.join()
+        print("exited Rx")
+
+        port.close()
 
 if __name__ == "__main__":
     main()
