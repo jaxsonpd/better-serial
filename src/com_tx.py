@@ -8,6 +8,7 @@ import string
 import serial
 import os
 import sys
+import threading
 
 from get_char import getchar
 
@@ -79,47 +80,67 @@ def convert_to_bytes(input_str: string) -> bytearray:
     return output_bytes
 
 
-def com_tx_local_thread_entry(port: serial.Serial) -> None:
+class ComTxThread(threading.Thread):
     """
-    Local edit serial transmit thread entry. This thread takes user input
-    and then sends it to the device including non printable chars entered in
-    the normal python format (e.g. \x00).
+    A thread to send values to the serial port from the terminal.
+    """
+    def __init__(self, serial_port: serial.Serial, mode: str = "local"):
+        """
+        Initialise the thread to send values to the terminal from the 
+        terminal.
 
-    ### Params:
-    port: serial.Serial
-        The serial port to write to
-    """
-    try:
+        ### Params:
+        serial_port : serial.Serial
+            The serial port to send to
+        mode : str = "local"
+            The mode to use for the terminal (dumb or local)
+        """
+        super().__init__(group=None)
+
+        self.serial_port = serial_port
+        self.mode = mode
+
+    def run(self):
+        """
+        Run the sending thread
+        """
+        if (self.mode == "dumb"):
+            self.run_dumb()
+        elif (self.mode == "local"):
+            self.run_local()
+
+    def run_dumb(self):
+        """
+        Dumb terminal serial transmit thread entry. This thread takes user input
+        and then sends it to the device one char at a time.
+        """
         while (True):
-            str_to_send = input()
+            char = getchar()
 
-            output_bytes = convert_to_bytes(str_to_send)
-            output_bytes.append(13) # \n
+            if (char == -1):
+                continue
+            elif (char == '\b'):
+                print('\b\x20\b', end="")
+                sys.stdout.flush()
+            elif (char == '\x03'):
+                os._exit(0)
 
-            port.write(output_bytes) 
-    except EOFError:
-        os._exit(0)
+            self.serial_port.write(char.encode())
 
+    def run_local(self):
+        """
+        Local edit serial transmit thread entry. This thread takes user input
+        and then sends it to the device including non printable chars entered in
+        the normal python format (e.g. \x00).
+        """
+        try:
+            while (True):
+                str_to_send = input()
 
-def com_tx_dumb_thread_entry(port: serial.Serial) -> None:
-    """
-    Dumb terminal serial transmit thread entry. This thread takes user input
-    and then sends it to the device one char at a time.
+                output_bytes = convert_to_bytes(str_to_send)
+                output_bytes.append(13) # \n
 
-    ### Params:
-    port: serial.Serial
-        The serial port to write to
-    """
-
-    while (True):
-        char = getchar()
-
-        if (char == -1):
-              continue
-        elif (char == '\b'):
-              print('\b\x20\b', end="")
-              sys.stdout.flush()
-        elif (char == '\x03'):
+                self.serial_port.write(output_bytes) 
+        except EOFError:
             os._exit(0)
 
-        port.write(char.encode())

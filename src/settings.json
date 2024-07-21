@@ -6,8 +6,7 @@
         "baud": 115200,
         "data": 8,
         "parity": "N",
-        "stop": 1,
-        "display": false
+        "stop": 1
     },
     "terminal": {
         "display_npc": false,

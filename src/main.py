@@ -10,8 +10,9 @@ import serial
 
 from get_char import getchar
 from cmd_args import setup_cmd_args
-from com_rx import com_rx_thread_entry
-from com_tx import com_tx_local_thread_entry, com_tx_dumb_thread_entry
+from com_rx import ComRxThread
+from com_tx import ComTxThread
+
 from configuration import Config, ConfigDict
 
 def load_settings() -> tuple[ConfigDict, ConfigDict]:
@@ -51,7 +52,6 @@ def transpose_args(args, current_cfg: ConfigDict) -> None:
     current_cfg.serial.data = args.data
     current_cfg.serial.parity = args.parity
     current_cfg.serial.stop = args.stop
-    current_cfg.serial.display = args.display
     
     current_cfg.terminal = ConfigDict()
     current_cfg.terminal.display_npc = args.display
@@ -126,17 +126,10 @@ def main() -> None:
     print(f"In {current_cfg.mode} mode with display " \
         f"{current_cfg.terminal.display_npc}.")
     
-    if (args.mode == "local"):
-        com_tx_thread = threading.Thread(group=None, 
-            target=com_tx_local_thread_entry, args=(port, ))
-        
-    elif (args.mode == "dumb"):
-        com_tx_thread = threading.Thread(group=None, 
-            target=com_tx_dumb_thread_entry, args=(port, ))
-
-    com_rx_thread = threading.Thread(group=None, target=com_rx_thread_entry,
-        args=(port, current_cfg.terminal.display_npc, ))
+    com_tx_thread = ComTxThread(port, current_cfg.mode)
     
+    com_rx_thread = ComRxThread(port, current_cfg.terminal.display_npc)
+
     # start threads
     com_tx_thread.start()
     com_rx_thread.start()
