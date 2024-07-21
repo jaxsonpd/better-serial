@@ -5,6 +5,7 @@
 # @brief This file contains various helper functions for the project
 
 import threading
+import datetime
 
 def close_com_threads():
     """
@@ -15,4 +16,19 @@ def close_com_threads():
 
     for thread in threading.enumerate():
         if (thread.getName() in com_thread_names):
-            thread.
+            thread.stop()
+
+
+def get_time_str() -> str:
+    """
+    Get the current time and return it as a str to append at the start of
+    system messages.
+
+    ### Returns:
+    out : str
+        Print string
+    """
+    now = datetime.datetime.now()
+
+    return now.strftime("[%H:%M:%S]:")
+

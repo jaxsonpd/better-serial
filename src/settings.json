@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "mode": "local",
+    "mode": "dumb",
     "serial": {
         "port": "/dev/ttyUSB0",
         "baud": 115200,

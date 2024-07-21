@@ -9,7 +9,6 @@ import serial
 import os
 import sys
 import threading
-import multiprocessing
 import utils
 import pty
 
@@ -83,7 +82,7 @@ def convert_to_bytes(input_str: string) -> bytearray:
     return output_bytes
 
 
-class ComTxThread(multiprocessing.Process):
+class ComTxThread(threading.Thread):
     """
     A thread to send values to the serial port from the terminal.
     """
@@ -98,10 +97,19 @@ class ComTxThread(multiprocessing.Process):
         mode : str = "local"
             The mode to use for the terminal (dumb or local)
         """
-        super().__init__(group=None)
+        super().__init__(group=None, name="com_tx_thread")
 
         self.serial_port = serial_port
         self.mode = mode
+
+        self._stopper = threading.Event()
+        self._stopper.clear()
+    
+    def stop(self):
+        self._stopper.set()
+
+    def stopped(self):
+        return self._stopper.is_set()
 
     def run(self):
         """
@@ -117,7 +125,7 @@ class ComTxThread(multiprocessing.Process):
         Dumb terminal serial transmit thread entry. This thread takes user input
         and then sends it to the device one char at a time.
         """
-        while (True):
+        while (not self.stopped()):
             char = getchar()
 
             if (char == -1):
@@ -132,6 +140,7 @@ class ComTxThread(multiprocessing.Process):
                 self.serial_port.write(char.encode())
             except serial.SerialException:
                 utils.close_com_threads()
+                continue
             
 
     def run_local(self):
@@ -141,7 +150,7 @@ class ComTxThread(multiprocessing.Process):
         the normal python format (e.g. \x00).
         """
         try:
-            while (True):
+            while (not self.stopped()):
                 str_to_send = input()
 
                 output_bytes = convert_to_bytes(str_to_send)
@@ -151,6 +160,7 @@ class ComTxThread(multiprocessing.Process):
                     self.serial_port.write(str_to_send.encode())
                 except serial.SerialException:
                     utils.close_com_threads()
+
         except EOFError:
             os._exit(0)
 

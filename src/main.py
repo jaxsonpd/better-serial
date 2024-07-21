@@ -6,12 +6,14 @@
 # and helper Functions
 
 import serial
+import datetime
 
-from get_char import getchar
+
 from cmd_args import setup_cmd_args
 from com_rx import ComRxThread
 from com_tx import ComTxThread
-import pty
+import utils
+
 
 from configuration import Config, ConfigDict
 
@@ -91,13 +93,14 @@ def open_serial_port(port: str, baud: int, data: int, parity: str,
             
         except serial.serialutil.SerialException:
             if (first_print):
-                print("Serial port open error please review settings")
+                print(f"{utils.get_time_str()} Serial port waiting to open" \
+                      "(Check settings if connected) \r")
 
             first_print = False
         except:
             exit(0)
 
-    print(f"Serial monitor started: {data}, {stop}, {baud}, {parity}")
+    print(f"{utils.get_time_str()} Serial monitor started: {data}, {stop}, {baud}, {parity}")
 
     return port
 
@@ -123,7 +126,7 @@ def main() -> None:
             current_cfg.serial.data, current_cfg.serial.parity, 
             current_cfg.serial.stop, 0.5)
 
-        print(f"In {current_cfg.mode} mode with display " \
+        print(f"{utils.get_time_str()} In {current_cfg.mode} mode with display " \
             f"{current_cfg.terminal.display_npc}.")
 
         com_tx_thread = ComTxThread(port, current_cfg.mode)
@@ -134,10 +137,11 @@ def main() -> None:
         com_tx_thread.start()
         com_rx_thread.start()
 
-        com_tx_thread.join()
-        print("exited tx")
         com_rx_thread.join()
-        print("exited Rx")
+        print(f"\r\n{utils.get_time_str()} Lost connection\r")
+        com_tx_thread.join()
+        
+
 
         port.close()
 
