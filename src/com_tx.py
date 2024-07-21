@@ -9,6 +9,8 @@ import serial
 import os
 import sys
 import threading
+import utils
+import pty
 
 from get_char import getchar
 
@@ -95,10 +97,19 @@ class ComTxThread(threading.Thread):
         mode : str = "local"
             The mode to use for the terminal (dumb or local)
         """
-        super().__init__(group=None)
+        super().__init__(group=None, name="com_tx_thread")
 
         self.serial_port = serial_port
         self.mode = mode
+
+        self._stopper = threading.Event()
+        self._stopper.clear()
+    
+    def stop(self):
+        self._stopper.set()
+
+    def stopped(self):
+        return self._stopper.is_set()
 
     def run(self):
         """
@@ -114,7 +125,7 @@ class ComTxThread(threading.Thread):
         Dumb terminal serial transmit thread entry. This thread takes user input
         and then sends it to the device one char at a time.
         """
-        while (True):
+        while (not self.stopped()):
             char = getchar()
 
             if (char == -1):
@@ -125,7 +136,12 @@ class ComTxThread(threading.Thread):
             elif (char == '\x03'):
                 os._exit(0)
 
-            self.serial_port.write(char.encode())
+            try: # Cannot use .is_open() as it is to slow
+                self.serial_port.write(char.encode())
+            except serial.SerialException:
+                utils.close_com_threads()
+                continue
+            
 
     def run_local(self):
         """
@@ -134,13 +150,17 @@ class ComTxThread(threading.Thread):
         the normal python format (e.g. \x00).
         """
         try:
-            while (True):
+            while (not self.stopped()):
                 str_to_send = input()
 
                 output_bytes = convert_to_bytes(str_to_send)
                 output_bytes.append(13) # \n
 
-                self.serial_port.write(output_bytes) 
+                try: # Cannot use .is_open() as it is to slow
+                    self.serial_port.write(str_to_send.encode())
+                except serial.SerialException:
+                    utils.close_com_threads()
+
         except EOFError:
             os._exit(0)
 
