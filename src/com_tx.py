@@ -12,7 +12,7 @@ import threading
 import utils
 import pty
 
-from get_char import getchar
+from keyboard_hit import KBHit
 
 # Possible escape characters
 escape_chars = ['n', 'r', 't', 'b', 'f', 'o', 'x', '\\']
@@ -104,12 +104,33 @@ class ComTxThread(threading.Thread):
 
         self._stopper = threading.Event()
         self._stopper.clear()
+
+        self.kb = KBHit()
     
     def stop(self):
+        """
+        Stop the thread
+        """
         self._stopper.set()
 
     def stopped(self):
+        """
+        Check if the thread has been stopped
+        """
         return self._stopper.is_set()
+    
+    def get_char_if_available(self) -> str:
+        """
+        Get a char from stdin using the non blocking KBhit
+
+        ### Return:
+        out : str
+            The char read
+        """
+        if (self.kb.kbhit()):
+             return self.kb.getch()
+        
+        return None
 
     def run(self):
         """
@@ -126,19 +147,27 @@ class ComTxThread(threading.Thread):
         and then sends it to the device one char at a time.
         """
         while (not self.stopped()):
-            char = getchar()
-
-            if (char == -1):
-                continue
-            elif (char == '\b'):
+            char = self.get_char_if_available()
+            
+            # Interpret
+            if (char == None): # No char was collected
+                 continue
+            elif (char == '\b'): # Backspace handling
+                self.kb.set_normal_term()
                 print('\b\x20\b', end="")
                 sys.stdout.flush()
-            elif (char == '\x03'):
+                self.kb = KBHit()
+            elif (char == '\x1B'):
+                print()
+                self.kb.set_normal_term()
+                utils.close_com_threads()
                 os._exit(0)
 
+            # Send
             try: # Cannot use .is_open() as it is to slow
                 self.serial_port.write(char.encode())
             except serial.SerialException:
+                self.kb.set_normal_term()
                 utils.close_com_threads()
                 continue
             
