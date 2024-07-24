@@ -10,7 +10,6 @@ import os
 import sys
 import threading
 import utils
-import pty
 
 from get_char import getchar
 
