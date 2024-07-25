@@ -10,7 +10,6 @@ import os
 import sys
 import threading
 import utils
-import pty
 
 from keyboard_hit import KBHit
 
@@ -127,10 +126,48 @@ class ComTxThread(threading.Thread):
         out : str
             The char read
         """
+        char = None
         if (self.kb.kbhit()):
-             return self.kb.getch()
+            char =  self.kb.getch()
         
-        return None
+        # Interpret
+        if (char == '\b'): # Backspace handling
+            self.kb.set_normal_term()
+            print('\b\x20\b', end="")
+            sys.stdout.flush()
+            self.kb = KBHit()
+        elif (char == '\x1B'):
+            print()
+            self.kb.set_normal_term()
+            utils.close_com_threads()
+            os._exit(0)
+        
+        return char
+    
+    def input_non_blocking(self) -> str:
+        """
+        Read until '\n' that checks the stop flag so that it is not blocking.
+
+        ### Return:
+        out : str
+            The line read
+        """
+        read_string = None
+        while (not self.stopped()):
+            char = self.get_char_if_available()
+
+            if (char == None):
+                continue
+            
+            print(char, end="")
+            sys.stdout.flush()
+
+            if (char == "\r"):
+                print()
+                read_string += char
+                return read_string
+            else:
+                read_string += char   
 
     def run(self):
         """
@@ -149,20 +186,9 @@ class ComTxThread(threading.Thread):
         while (not self.stopped()):
             char = self.get_char_if_available()
             
-            # Interpret
-            if (char == None): # No char was collected
+            if (char == None):
                  continue
-            elif (char == '\b'): # Backspace handling
-                self.kb.set_normal_term()
-                print('\b\x20\b', end="")
-                sys.stdout.flush()
-                self.kb = KBHit()
-            elif (char == '\x1B'):
-                print()
-                self.kb.set_normal_term()
-                utils.close_com_threads()
-                os._exit(0)
-
+            
             # Send
             try: # Cannot use .is_open() as it is to slow
                 self.serial_port.write(char.encode())
@@ -171,7 +197,6 @@ class ComTxThread(threading.Thread):
                 utils.close_com_threads()
                 continue
             
-
     def run_local(self):
         """
         Local edit serial transmit thread entry. This thread takes user input
@@ -180,7 +205,10 @@ class ComTxThread(threading.Thread):
         """
         try:
             while (not self.stopped()):
-                str_to_send = input()
+                str_to_send = self.input_non_blocking()
+
+                if (str_to_send == None):
+                    continue
 
                 output_bytes = convert_to_bytes(str_to_send)
                 output_bytes.append(13) # \n
@@ -188,6 +216,7 @@ class ComTxThread(threading.Thread):
                 try: # Cannot use .is_open() as it is to slow
                     self.serial_port.write(str_to_send.encode())
                 except serial.SerialException:
+                    self.kb.set_normal_term()
                     utils.close_com_threads()
 
         except EOFError:

@@ -2,7 +2,7 @@
     "version": 1,
     "mode": "dumb",
     "serial": {
-        "port": "/dev/ttyUSB0",
+        "port": "com8",
         "baud": 115200,
         "data": 8,
         "parity": "N",
