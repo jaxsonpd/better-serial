@@ -35,7 +35,7 @@ pressed and writing chars when received. In this mode no special chars can be
 sent to the device however the special char display switch for incoming data 
 does work.
 
-To exit this mode use `<alt-c>` which will terminate the send and receive 
+To exit this mode use `<esc>` which will terminate the send and receive 
 threads.
 
 ### Local Edit/CMD sender
@@ -45,7 +45,7 @@ special chars using the `\xFF` or `\o888` methods (where \ is a special char
 and must be escaped). The terminal reads back as normal printing chars when they 
 are received.
 
-To exit this mode use `<ctrl-c><ctrl-c>` to exit both the send and receive 
+To exit this mode use `<esc>` to exit both the send and receive 
 threads.
 
 ## Installation
@@ -86,14 +86,10 @@ the program reads directly from it).
 ## To Do
 
 ### Admin/Tidy
-- [ ] Move threads to classes
 
 ### Features
 - [ ] Add packet end identifier
 - [ ] Ability to list available serial ports
-- [ ] Configuration file
-- [ ] Auto Resume
 - [ ] Numerical output
 
 ### Bug Fix
-- [ ] Allow for one sequence exit in all cases

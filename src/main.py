@@ -7,6 +7,9 @@
 
 import serial
 import datetime
+import os
+
+import sys
 
 
 from cmd_args import setup_cmd_args
@@ -16,6 +19,29 @@ import utils
 
 
 from configuration import Config, ConfigDict
+
+def get_cwd() -> str:
+    """
+    Get the current working directory of the application
+
+    ### Returns
+    directory
+        The full current working directory path
+    """
+    getcwd = os.getcwd()
+    argv_0 = sys.argv[0]
+
+    # Remove file name from argv
+    i = len(argv_0)-1
+    while (argv_0[i] != "\\" and i != 0):
+        i -= 1
+
+    argv_0 = argv_0[:i] 
+
+    if (argv_0[0:2] == "C:"): # Running in a stand alone application
+        return argv_0
+    else:
+        return os.getcwd() + "\\" + argv_0
 
 def load_settings() -> tuple[ConfigDict, ConfigDict]:
     """
@@ -33,7 +59,9 @@ def load_settings() -> tuple[ConfigDict, ConfigDict]:
     current_cfg = ConfigDict()
     current_cfg.version = 1
 
-    default_cfg = Config.load_json("default-settings.json")
+    current_cfg.cwd_full = get_cwd()
+
+    default_cfg = Config.load_json(current_cfg.cwd_full + "\\default-settings.json")
     
     return default_cfg, current_cfg
 
@@ -98,7 +126,7 @@ def open_serial_port(port: str, baud: int, data: int, parity: str,
 
             first_print = False
         except:
-            exit(0)
+            os._exit(0)
 
     print(f"{utils.get_time_str()} Serial monitor started: {data}, {stop}, {baud}, {parity}")
 
@@ -114,13 +142,11 @@ def main() -> None:
     parser = setup_cmd_args(default_cfg)
     args = parser.parse_args()
 
+
+
     transpose_args(args, current_cfg)
 
-    current_cfg.save_json("settings.json")
-
     while (True):
-        current_cfg = Config.load_json("settings.json")
-
         # Wait for serial port to open
         port = open_serial_port(current_cfg.serial.port, current_cfg.serial.baud, 
             current_cfg.serial.data, current_cfg.serial.parity, 
@@ -141,8 +167,6 @@ def main() -> None:
         print(f"\r\n{utils.get_time_str()} Lost connection\r")
         com_tx_thread.join()
         
-
-
         port.close()
 
 if __name__ == "__main__":
