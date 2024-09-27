@@ -10,6 +10,7 @@ import os
 import sys
 import threading
 import utils
+import time
 
 from keyboard_hit import KBHit
 
@@ -152,8 +153,10 @@ class ComTxThread(threading.Thread):
         out : str
             The line read
         """
-        read_string = None
+        read_string = ""
         while (not self.stopped()):
+            time.sleep(0.01)
+
             char = self.get_char_if_available()
 
             if (char == None):
@@ -167,7 +170,8 @@ class ComTxThread(threading.Thread):
                 read_string += char
                 return read_string
             else:
-                read_string += char   
+                read_string += char
+
 
     def run(self):
         """
@@ -184,6 +188,8 @@ class ComTxThread(threading.Thread):
         and then sends it to the device one char at a time.
         """
         while (not self.stopped()):
+            time.sleep(0.01)
+
             char = self.get_char_if_available()
             
             if (char == None):
@@ -197,6 +203,7 @@ class ComTxThread(threading.Thread):
                 utils.close_com_threads()
                 continue
             
+        
     def run_local(self):
         """
         Local edit serial transmit thread entry. This thread takes user input
@@ -205,6 +212,8 @@ class ComTxThread(threading.Thread):
         """
         try:
             while (not self.stopped()):
+                time.sleep(0.01)
+
                 str_to_send = self.input_non_blocking()
 
                 if (str_to_send == None):
