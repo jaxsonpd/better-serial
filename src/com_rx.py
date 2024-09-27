@@ -40,9 +40,15 @@ class ComRxThread(threading.Thread):
         self._stopper.clear()
     
     def stop(self):
+        """
+        Stop the thread
+        """
         self._stopper.set()
 
     def stopped(self):
+        """
+        Check if the thread has been stopped
+        """
         return self._stopper.is_set()
 
     def run(self):

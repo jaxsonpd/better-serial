@@ -10,8 +10,9 @@ import os
 import sys
 import threading
 import utils
+import time
 
-from get_char import getchar
+from keyboard_hit import KBHit
 
 # Possible escape characters
 escape_chars = ['n', 'r', 't', 'b', 'f', 'o', 'x', '\\']
@@ -103,12 +104,74 @@ class ComTxThread(threading.Thread):
 
         self._stopper = threading.Event()
         self._stopper.clear()
+
+        self.kb = KBHit()
     
     def stop(self):
+        """
+        Stop the thread
+        """
         self._stopper.set()
 
     def stopped(self):
+        """
+        Check if the thread has been stopped
+        """
         return self._stopper.is_set()
+    
+    def get_char_if_available(self) -> str:
+        """
+        Get a char from stdin using the non blocking KBhit
+
+        ### Return:
+        out : str
+            The char read
+        """
+        char = None
+        if (self.kb.kbhit()):
+            char =  self.kb.getch()
+        
+        # Interpret
+        if (char == '\b'): # Backspace handling
+            self.kb.set_normal_term()
+            print('\b\x20\b', end="")
+            sys.stdout.flush()
+            self.kb = KBHit()
+        elif (char == '\x1B'):
+            print()
+            self.kb.set_normal_term()
+            utils.close_com_threads()
+            os._exit(0)
+        
+        return char
+    
+    def input_non_blocking(self) -> str:
+        """
+        Read until '\n' that checks the stop flag so that it is not blocking.
+
+        ### Return:
+        out : str
+            The line read
+        """
+        read_string = ""
+        while (not self.stopped()):
+            time.sleep(0.01)
+
+            char = self.get_char_if_available()
+
+            if (char == None):
+                continue
+            
+            print(char, end="")
+            sys.stdout.flush()
+
+            if (char == "\r"):
+                print()
+                read_string += char
+                return read_string
+            else:
+                read_string += char
+
 
     def run(self):
         """
@@ -125,23 +188,22 @@ class ComTxThread(threading.Thread):
         and then sends it to the device one char at a time.
         """
         while (not self.stopped()):
-            char = getchar()
+            time.sleep(0.01)
 
-            if (char == -1):
-                continue
-            elif (char == '\b'):
-                print('\b\x20\b', end="")
-                sys.stdout.flush()
-            elif (char == '\x03'):
-                os._exit(0)
-
+            char = self.get_char_if_available()
+            
+            if (char == None):
+                 continue
+            
+            # Send
             try: # Cannot use .is_open() as it is to slow
                 self.serial_port.write(char.encode())
             except serial.SerialException:
+                self.kb.set_normal_term()
                 utils.close_com_threads()
                 continue
             
-
+        
     def run_local(self):
         """
         Local edit serial transmit thread entry. This thread takes user input
@@ -150,7 +212,12 @@ class ComTxThread(threading.Thread):
         """
         try:
             while (not self.stopped()):
-                str_to_send = input()
+                time.sleep(0.01)
+
+                str_to_send = self.input_non_blocking()
+
+                if (str_to_send == None):
+                    continue
 
                 output_bytes = convert_to_bytes(str_to_send)
                 output_bytes.append(13) # \n
@@ -158,6 +225,7 @@ class ComTxThread(threading.Thread):
                 try: # Cannot use .is_open() as it is to slow
                     self.serial_port.write(output_bytes)
                 except serial.SerialException:
+                    self.kb.set_normal_term()
                     utils.close_com_threads()
 
         except EOFError:
