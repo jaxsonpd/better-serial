@@ -116,11 +116,7 @@ def main() -> None:
 
     transpose_args(args, current_cfg)
 
-    current_cfg.save_json("settings.json")
-
     while (True):
-        current_cfg = Config.load_json("settings.json")
-
         # Wait for serial port to open
         port = open_serial_port(current_cfg.serial.port, current_cfg.serial.baud, 
             current_cfg.serial.data, current_cfg.serial.parity, 
