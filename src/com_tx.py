@@ -223,7 +223,7 @@ class ComTxThread(threading.Thread):
                 output_bytes.append(13) # \n
 
                 try: # Cannot use .is_open() as it is to slow
-                    self.serial_port.write(str_to_send.encode())
+                    self.serial_port.write(output_bytes)
                 except serial.SerialException:
                     self.kb.set_normal_term()
                     utils.close_com_threads()
