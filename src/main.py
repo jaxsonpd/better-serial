@@ -38,10 +38,13 @@ def get_cwd() -> str:
 
     argv_0 = argv_0[:i] 
 
-    if (argv_0[0:2] == "C:"): # Running in a stand alone application
-        return argv_0
+    if os.name == 'nt':
+        if (argv_0[0:2] == "C:"): # Running in a stand alone application
+            return argv_0
+        else:
+            return os.getcwd() + "\\" + argv_0
     else:
-        return os.getcwd() + "\\" + argv_0
+        return os.getcwd()
 
 def load_settings() -> tuple[ConfigDict, ConfigDict]:
     """
@@ -61,8 +64,11 @@ def load_settings() -> tuple[ConfigDict, ConfigDict]:
 
     current_cfg.cwd_full = get_cwd()
 
-    default_cfg = Config.load_json(current_cfg.cwd_full + "\\default-settings.json")
-    
+    if os.name == 'nt':
+        default_cfg = Config.load_json(current_cfg.cwd_full + "\\default-settings.json")
+    else:
+        default_cfg = Config.load_json(current_cfg.cwd_full + "/default-settings.json")
+
     return default_cfg, current_cfg
 
 def transpose_args(args, current_cfg: ConfigDict) -> None:
