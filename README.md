@@ -4,14 +4,17 @@ A serial terminal that isn't rubbish. This project was inspired by the
 sorry state of the serial monitor offering available especially on windows.
 Its key features are listed below.
 
+Currently it works most of the time but can enter strange fail states on linux due to poor exit handling.
+
 ### Implemented:
 - Easy sending of command chars in a way that can be viewed.
 - Automatic open when device is detected.
 - No separate send box just acts like a terminal.
 - Ability to display non-printable ascii chars.
+- Auto resume on device reconnection (without application restart).
 
 ### To be implemented:
-- Auto resume on device reconnection (without application restart).
+
 - Listing of available serial ports.
 - Configurable UI
 - End of packet identifier (to force a new line on chars other than `\n`)
@@ -82,14 +85,3 @@ This program uses two settings files. The first (`default-settings.json`)
 handles the default values for the program while the second (`settings.json`)
 contains the settings for the current session (this should not be edited as
 the program reads directly from it).
-
-## To Do
-
-### Admin/Tidy
-
-### Features
-- [ ] Add packet end identifier
-- [ ] Ability to list available serial ports
-- [ ] Numerical output
-
-### Bug Fix
